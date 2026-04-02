@@ -1,0 +1,50 @@
+{
+  "name": "vercel-clone",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "dev:server": "tsx server.ts",
+    "build": "next build",
+    "start": "next start",
+    "start:server": "NODE_ENV=production tsx server.ts",
+    "db:migrate": "psql $DATABASE_URL -f src/lib/forex/db/migrations/001_create_ohlcv.sql -f src/lib/forex/db/migrations/002_create_signals.sql -f src/lib/forex/db/migrations/003_add_crypto_pairs.sql -f src/lib/forex/db/migrations/004_create_news_events.sql -f src/lib/forex/db/migrations/005_create_chart_analyses.sql -f src/lib/forex/db/migrations/006_create_verified_signals.sql -f src/lib/forex/db/migrations/007_create_users_subscriptions.sql",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.81.0",
+    "@tailwindcss/postcss": "^4.2.2",
+    "@tanstack/react-query": "^5.96.0",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "ioredis": "^5.10.1",
+    "lightweight-charts": "^5.1.0",
+    "next": "^16.2.1",
+    "node-cron": "^4.2.1",
+    "pg": "^8.20.0",
+    "postcss": "^8.5.8",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "sonner": "^2.0.7",
+    "stripe": "^21.0.1",
+    "tailwindcss": "^4.2.2",
+    "technicalindicators": "^3.1.0",
+    "typescript": "^6.0.2",
+    "ws": "^8.20.0",
+    "zod": "^4.3.6",
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "@types/node-cron": "^3.0.11",
+    "@types/pg": "^8.20.0",
+    "@types/ws": "^8.18.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0"
+  }
+}
