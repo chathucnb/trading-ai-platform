@@ -1,7 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import type { IncomingMessage } from 'http';
 import type { Server } from 'http';
-import { getRedisSubscriber } from '../cache/redisClient';
+import { getRedisSubscriber, isRedisAvailable } from '../cache/redisClient';
 import { ClientMessageSchema } from '@/types/forex/websocket';
 import type { ServerMessage } from '@/types/forex/websocket';
 
@@ -31,22 +31,37 @@ function broadcastAll(message: ServerMessage): void {
   }
 }
 
+function setupRedisSubscriber(): void {
+  try {
+    const sub = getRedisSubscriber();
+    sub.connect().then(() => {
+      sub.psubscribe('channel:prices:*', 'channel:signals:*', 'channel:news:*', 'channel:agent:*');
+      sub.on('pmessage', (_pattern, channel, rawMessage) => {
+        try {
+          const message = JSON.parse(rawMessage) as ServerMessage;
+          const topic = channel.split(':').slice(2).join(':') || '*';
+          broadcast(topic, message);
+        } catch {
+          // ignore malformed messages
+        }
+      });
+      console.log('[WS] Redis subscriber connected');
+    }).catch((err) => {
+      console.warn('[WS] Redis subscriber failed to connect:', err.message);
+      // Retry after 10 seconds
+      setTimeout(setupRedisSubscriber, 10_000);
+    });
+  } catch (err) {
+    console.warn('[WS] Failed to setup Redis subscriber:', (err as Error).message);
+    setTimeout(setupRedisSubscriber, 10_000);
+  }
+}
+
 export function createWsServer(httpServer: Server): WebSocketServer {
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
-  // ── Redis pub/sub listener ───────────────────────────────────────────────
-  const sub = getRedisSubscriber();
-  sub.psubscribe('channel:prices:*', 'channel:signals:*', 'channel:news:*', 'channel:agent:*');
-  sub.on('pmessage', (_pattern, channel, rawMessage) => {
-    try {
-      const message = JSON.parse(rawMessage) as ServerMessage;
-      // Derive topic from channel name, e.g. "channel:prices:EUR/USD" → "EUR/USD"
-      const topic = channel.split(':').slice(2).join(':') || '*';
-      broadcast(topic, message);
-    } catch {
-      // ignore malformed messages
-    }
-  });
+  // ── Redis pub/sub listener (non-blocking) ────────────────────────────────
+  setupRedisSubscriber();
 
   // ── Connection handler ───────────────────────────────────────────────────
   wss.on('connection', (ws: WebSocket, _req: IncomingMessage) => {

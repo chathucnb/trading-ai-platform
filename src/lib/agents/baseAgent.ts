@@ -24,7 +24,7 @@ export abstract class BaseAgent {
     this.publisher = getRedisPublisher();
     this.model = model;
     this.anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY ?? '',
+      apiKey: process.env.ANTHROPIC_API_KEY || 'sk-placeholder',
     });
   }
 
